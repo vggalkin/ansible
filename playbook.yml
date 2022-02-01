@@ -78,7 +78,7 @@
     - name: Stop postgresql
       service:
         name: postgresql
-        state: stop
+        state: stopped
     - name: Start postgresql
       service:
         name: postgresql

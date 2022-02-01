@@ -1,0 +1,40 @@
+---
+- hosts: app
+  become: yes
+  remote_user: ansible
+  tasks:
+    - name: UBUNTU - Install packages to use repo over https
+      package: name={{ item }} state=latest update_cache=yes
+      loop: ['ca-certificates', 'curl', 'gnupg', 'lsb-release']
+      when: ansible_distribution == "Ubuntu"
+    - name: UBUNTU - Add Dockers official GPG key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+      when: ansible_distribution == 'Ubuntu'
+    - name: UBUNTU - Add Docker repository
+      apt_repository:
+        repo: deb https://download.docker.com/linux/ubuntu focal stable
+        state: present
+      when: ansible_distribution == 'Ubuntu'
+    - name: CENTOS - Install yum-utils
+      yum:
+        name: yum-utils
+        state: latest
+        update_cache: yes
+      when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "8"
+    - name: CENTOS - Add Docker repository
+      yum_repository:
+        name: docker
+        description: Repo for Docker
+        baseurl: https://download.docker.com/linux/centos/8/x86_64/stable/
+        gpgcheck: no
+      when: ansible_distribution == "CentOS"
+    - name: Install Docker
+      package: name={{ item }} state=latest
+      loop: ['docker-ce', 'docker-ce-cli','containerd.io']
+    - name: Start Docker
+      service:
+        name: docker
+        state: started
+        enabled: yes

@@ -38,3 +38,48 @@
         name: docker
         state: started
         enabled: yes
+
+- hosts: database
+  become: yes
+  remote_user: ansible
+  tasks:
+    - name: Install ca-certificates
+      apt:
+        name: ca-certificates
+        state: latest
+    - name: Add GPG key
+      apt_key:
+        url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+        state: present
+    - name: Add PostgreSql repository
+      apt_repository: 
+        repo: deb http://apt.postgresql.org/pub/repos/apt/ focal-pgdg main
+        state: present
+    - name: Install PostgreSql
+      package: name={{ item }} state=latest update_cache=yes
+      loop: ["postgresql-{{ postgresql_ver }}", 'postgresql-contrib']
+      notify:
+        - Stop postgresql
+    - name: Create directory for database
+      file:
+        path: /opt/postgresql
+        state: directory 
+    - name: Rsync database
+      command: rsync -av /var/lib/postgresql /opt
+    - name: Change database direcory
+      lineinfile:
+        path: "/etc/postgresql/{{ postgresql_ver }}/main/postgresql.conf"
+        regexp: "data_directory ="
+        line: "data_directory = '{{ postgresql_data }}{{ postgresql_ver }}/main'"
+        backrefs: yes
+      notify: Start postgresql
+    
+  handlers:
+    - name: Stop postgresql
+      service:
+        name: postgresql
+        state: stop
+    - name: Start postgresql
+      service:
+        name: postgresql
+        state: started

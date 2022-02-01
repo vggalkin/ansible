@@ -7,7 +7,7 @@
 
 [database:vars]
 postgresql_ver=12
-postgresql_data="/opt/postgresql/{{ postgresql_ver }}/main"
+postgresql_data=/opt/postgresql/
 
 [web]
 10.129.0.10
